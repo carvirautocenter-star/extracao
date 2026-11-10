@@ -1,346 +1,218 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Extractor - TempAR</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        darkbg: '#0b0f19',
-                        cardbg: '#131c2e',
-                        primary: '#2563eb',
-                        accent: '#10b981'
-                    }
-                }
-            }
-        }
-    </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { font-family: system-ui, -apple-system, sans-serif; }
-        .glass-panel { background: rgba(19, 28, 46, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-        textarea { resize: vertical; }
-        .json-viewer { font-family: 'Courier New', Courier, monospace; font-size: 13px; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #0b0f19; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Extractor PRO — Tempario</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<style>
+:root{--bg:#0b1020;--panel:#121b2e;--panel2:#0e1728;--line:#263650;--text:#e8eef8;--muted:#91a1b9;--blue:#4778f5;--green:#10b981;--red:#fb7185;--cyan:#67e8f9}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+header{position:sticky;top:0;z-index:5;background:#101a2ded;backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;gap:12px;align-items:center}.logo{width:42px;height:42px;border-radius:12px;background:#2448a8;display:grid;place-items:center;font-size:21px}.brand h1{font-size:17px;margin:0;color:#fff}.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}
+button,.button{border:0;border-radius:9px;padding:10px 13px;background:#263650;color:var(--text);font-weight:650;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:13px}
+button:hover,.button:hover{filter:brightness(1.15)}button.primary{background:var(--blue);color:white}button.good{background:#087f5b;color:white}button.danger{background:#482333;color:#ffb4c1}button.ghost{background:transparent;border:1px solid var(--line)}
+main{max-width:1600px;margin:auto;padding:20px;display:grid;grid-template-columns:minmax(280px, .95fr) minmax(340px,1.2fr) minmax(280px,.85fr);gap:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}.panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.07em;margin:0 0 14px;color:#dce7f8}
+.drop{border:1.5px dashed #50617c;border-radius:12px;padding:18px;text-align:center;background:#0d1728;position:relative}.drop input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.drop strong{display:block;margin:7px 0 3px}.muted{color:var(--muted)}small{font-size:11px;color:var(--muted)}
+textarea,input,select{background:#0a1323;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:10px;font:inherit;width:100%;outline:none}textarea:focus,input:focus{border-color:var(--blue)}textarea{min-height:190px;resize:vertical}.field{margin:12px 0}.field label{display:block;font-size:11px;color:var(--muted);margin:0 0 5px}.row{display:flex;gap:8px;align-items:center}.row>*{min-width:0}.row.wrap{flex-wrap:wrap}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.progress{height:6px;background:#263650;border-radius:10px;overflow:hidden;margin:9px 0}.progress span{display:block;height:100%;width:0;background:var(--green);transition:width .2s}
+.status{font-size:12px;color:var(--cyan);min-height:20px;margin-top:8px}.preview{max-width:100%;max-height:230px;object-fit:contain;border-radius:8px;margin-top:10px;background:#080d17;display:none}
+.service{background:#0d1728;border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:11px}.service-head{display:grid;grid-template-columns:minmax(0,1fr) 100px 32px;gap:8px;align-items:center}.service-head input:first-child{font-weight:700}.service-head input:nth-child(2){color:var(--cyan);text-align:center}.parts{margin-top:10px;padding:10px;background:#111e32;border-radius:9px}.parts-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:11px;color:var(--muted);text-transform:uppercase}.part{display:flex;gap:7px;margin:6px 0}.part input{font-size:12px;padding:7px}.part button{padding:5px 9px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#a7f3d0;font:12px/1.5 ui-monospace,monospace;background:#080e18;border:1px solid var(--line);border-radius:9px;padding:12px;min-height:260px;max-height:55vh;overflow:auto}
+.statbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.stat{background:#0d1728;border:1px solid var(--line);padding:7px 10px;border-radius:9px;font-size:12px}.empty{text-align:center;color:var(--muted);padding:45px 10px;border:1px dashed var(--line);border-radius:10px}
+.note{font-size:11px;color:var(--muted);line-height:1.5;margin-top:10px}.check{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}.check input{width:auto}
+@media(max-width:1050px){main{grid-template-columns:1fr 1fr}.jsonpanel{grid-column:1/-1}}
+@media(max-width:700px){header{padding:12px}header .top-actions button:not(.good){display:none}main{display:flex;flex-direction:column;padding:12px}.panel{padding:13px}.service-head{grid-template-columns:minmax(0,1fr) 82px 30px}pre{max-height:360px}}
+</style>
 </head>
-<body class="bg-darkbg text-slate-300 min-h-screen flex flex-col">
+<body>
+<header>
+ <div class="brand"><div class="logo">⌕</div><div><h1>Data Extractor <span style="color:#80a5ff">PRO</span></h1><p>Extração de serviços, tempos e insumos do Tempario</p></div></div>
+ <div class="top-actions row"><button class="ghost" onclick="clearAll()">Limpar tudo</button><button class="good" onclick="copyJSON()">▣ Copiar JSON</button></div>
+</header>
+<main>
+<section class="panel">
+ <h2>01 · Entrada de dados</h2>
+ <div class="drop"><input id="files" type="file" accept="image/*" multiple onchange="loadFiles(this.files)"><div style="font-size:26px">▧</div><strong>Adicionar capturas de tela</strong><small>Selecione uma ou várias imagens PNG, JPG ou WEBP</small></div>
+ <img id="preview" class="preview" alt="Pré-visualização da imagem">
+ <div class="field"><label>Imagens na fila</label><div id="queue" class="muted" style="font-size:12px">Nenhuma imagem selecionada.</div></div>
+ <div class="row wrap"><button class="primary" id="ocrBtn" onclick="runOCR()">◎ Extrair texto das imagens</button><button class="ghost" onclick="document.getElementById('files').click()">Adicionar imagens</button></div>
+ <div class="progress"><span id="progressBar"></span></div><div id="status" class="status">OCR em português. A primeira execução pode demorar para baixar o idioma.</div>
+ <div class="field"><label for="rawText">Texto reconhecido / texto colado manualmente</label><textarea id="rawText" placeholder="O texto extraído aparecerá aqui. Você também pode colar o texto manualmente..."></textarea></div>
+ <div class="actions"><button class="primary" onclick="parseText()">✦ Interpretar serviços</button><button class="ghost" onclick="document.getElementById('rawText').value=''">Apagar texto</button></div>
+ <p class="note">Dica: prefira capturas nítidas, sem vídeo sobreposto, com as colunas Serviço e Tempo Real visíveis. O OCR roda no navegador e exige internet para carregar o motor/idioma na primeira vez.</p>
+</section>
 
-    <!-- Header -->
-    <header class="border-b border-slate-800 bg-cardbg/50 px-6 py-4 flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
-                <i class="fa-solid fa-robot text-xl"></i>
-            </div>
-            <div>
-                <h1 class="text-lg font-bold text-white">Data Extractor <span class="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded ml-2 border border-primary/30">v2.0</span></h1>
-                <p class="text-xs text-slate-400">Extração inteligente de Serviços e Insumos</p>
-            </div>
-        </div>
-        <button onclick="copyToClipboard()" class="bg-accent hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
-            <i class="fa-regular fa-copy"></i> Copiar JSON
-        </button>
-    </header>
+<section class="panel">
+ <h2>02 · Revisão e edição</h2>
+ <div class="statbar"><div class="stat">Serviços: <b id="serviceCount">0</b></div><div class="stat">Insumos: <b id="partCount">0</b></div><div class="stat">Tempo total: <b id="totalTime">0 min</b></div></div>
+ <div class="actions" style="margin:0 0 12px"><button class="ghost" onclick="addService()">＋ Novo serviço</button><button class="ghost" onclick="sortServices()">↕ Ordenar A–Z</button></div>
+ <div id="editor"><div class="empty">Aguardando extração.<br><small>Os serviços identificados aparecerão aqui para revisão.</small></div></div>
+</section>
 
-    <!-- Main Content -->
-    <main class="flex-1 p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        <!-- Coluna 1: Entrada de Dados -->
-        <div class="lg:col-span-4 flex flex-col gap-4">
-            <div class="glass-panel rounded-xl p-4 flex-1 flex flex-col h-[80vh]">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-sm font-bold text-white uppercase tracking-wider"><i class="fa-solid fa-keyboard text-slate-400 mr-2"></i>Texto / Imagem</h2>
-                    <button onclick="clearInput()" class="text-xs text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i> Limpar</button>
-                </div>
-                
-                <!-- OCR Upload -->
-                <div class="mb-4 border-2 border-dashed border-slate-600 rounded-lg p-3 text-center hover:border-primary transition cursor-pointer relative bg-slate-800/30">
-                    <input type="file" id="imageInput" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="processImage(this)">
-                    <i class="fa-solid fa-camera text-xl text-slate-400 mb-1"></i>
-                    <p class="text-xs text-slate-300 font-medium">Tirar Print ou Anexar Imagem</p>
-                    <p class="text-[10px] text-slate-500 mt-1">O OCR extrairá o texto automaticamente</p>
-                </div>
-                <div id="ocrProgress" class="mb-2 text-xs text-center text-primary hidden font-semibold animate-pulse"></div>
+<section class="panel jsonpanel">
+ <h2>03 · Exportação / Supabase</h2>
+ <div class="field"><label>Formato de exportação</label><select id="format" onchange="updateJSON()"><option value="nested">JSON — serviço com insumos</option><option value="flat">JSON — registros separados</option></select></div>
+ <pre id="jsonOutput">[]</pre>
+ <div class="actions"><button class="good" onclick="copyJSON()">▣ Copiar JSON</button><button onclick="downloadJSON()">↓ Baixar JSON</button><button onclick="downloadCSV()">↓ Baixar CSV</button></div>
+ <div class="field"><label>SQL sugerido para estrutura básica</label><pre style="min-height:0;max-height:220px">create table services (
+ id bigint generated by default as identity primary key,
+ service_name text not null,
+ time_minutes integer not null default 0,
+ created_at timestamptz default now()
+);
 
-                <textarea id="rawText" class="w-full flex-1 bg-darkbg border border-slate-700 rounded-lg p-3 text-sm text-slate-300 focus:outline-none focus:border-primary placeholder-slate-600 mb-3" placeholder="Ou cole o texto aqui..."></textarea>
-                
-                <button onclick="processText()" class="w-full bg-primary hover:bg-blue-600 text-white font-semibold py-3 rounded-lg transition text-sm flex justify-center items-center gap-2 shadow-lg shadow-primary/20">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i> Processar Dados
-                </button>
-            </div>
-        </div>
-
-        <!-- Coluna 2: Editor -->
-        <div class="lg:col-span-5 flex flex-col">
-            <div class="glass-panel rounded-xl p-4 flex-1 flex flex-col h-[80vh]">
-                <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-pen-to-square text-slate-400"></i> Revisar Extração
-                </h2>
-                
-                <div id="editorContainer" class="flex-1 overflow-y-auto pr-2 space-y-4">
-                    <div class="text-center text-slate-500 py-10 flex flex-col items-center">
-                        <i class="fa-solid fa-file-invoice text-4xl mb-3 opacity-50"></i>
-                        <p class="text-sm">Aguardando dados...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Coluna 3: JSON (Supabase) -->
-        <div class="lg:col-span-3 flex flex-col">
-            <div class="glass-panel rounded-xl p-4 flex-1 flex flex-col h-[80vh] bg-[#0d1117]">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-sm font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
-                        <i class="fa-solid fa-database"></i> JSON Supabase
-                    </h2>
-                </div>
-                <div class="flex-1 overflow-auto bg-black/50 rounded-lg p-3 border border-slate-800">
-                    <pre id="jsonOutput" class="json-viewer text-emerald-300">[]</pre>
-                </div>
-                <p class="text-[10px] text-slate-500 mt-2 text-center">Sem preços. Apenas tempos e insumos.</p>
-            </div>
-        </div>
-
-    </main>
-
-    <script>
-        let extractedServices = [];
-
-        function clearInput() {
-            document.getElementById('rawText').value = '';
-            extractedServices = [];
-            renderEditor();
-        }
-
-        // --- MELHORIA NA LÓGICA DE EXTRAÇÃO ---
-        function processText() {
-            const rawText = document.getElementById('rawText').value;
-            if (!rawText.trim()) return alert("Por favor, insira algum texto ou imagem.");
-
-            let lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            
-            // Palavras que devem ser ignoradas (lixo da interface)
-            const noiseWords = [
-                "empresas", "clientes", "mkt", "crm", "tempario", "semsusto", "luciano", "viagens", 
-                "pagar.me", "você está no", "assine", "não encontrei", "selecione", "consulta",
-                "serviço", "tempo real", "valor", "ações", "orçamentos", "dados da oficina",
-                "custo de", "tabela de", "mecânicos", "controle de", "lubrificaçao", // Palavras soltas
-                "1h", "45min" // Vamos processar os tempos reais, mas ignorar se vierem soltos sem contexto
-            ];
-
-            // Regex para capturar tempos (45min, 5h30m, 1h)
-            const timeRegex = /^(\d+)h\s*(\d*)m?$|^(\d+)\s*min$/i;
-
-            let currentService = null;
-
-            for (let i = 0; i < lines.length; i++) {
-                let line = lines[i];
-                let lowerLine = line.toLowerCase();
-
-                // 1. Ignorar preços (linhas com R$)
-                if (line.includes('R$')) continue;
-
-                // 2. Ignorar ruídos exatos
-                if (noiseWords.includes(lowerLine)) continue;
-
-                // 3. Identificar Tempo
-                const timeMatch = line.match(timeRegex);
-                
-                if (timeMatch) {
-                    // A linha ANTERIOR a um tempo é sempre o Nome do Serviço.
-                    // Pegamos a linha i-1 (se existir e não for um tempo ou preço)
-                    let serviceName = lines[i - 1] || "Serviço Sem Nome";
-                    
-                    // Se a linha anterior for um preço (ex: R$), voltamos mais uma
-                    if(serviceName.includes('R$')) serviceName = lines[i - 2] || "Serviço Sem Nome";
-
-                    // Converte o tempo para minutos totais
-                    let mins = 0;
-                    if (timeMatch[0].includes('h')) {
-                        let h = parseInt(timeMatch[1]) || 0;
-                        let m = parseInt(timeMatch[2]) || 0;
-                        mins = (h * 60) + m;
-                    } else {
-                        mins = parseInt(timeMatch[3]) || 0;
-                    }
-
-                    currentService = {
-                        id: Date.now() + i,
-                        name: serviceName,
-                        time: mins,
-                        parts: []
-                    };
-                    
-                    extractedServices.push(currentService);
-                    continue; // Pula para a próxima linha
-                }
-
-                // 4. Se não for tempo, preço ou ruído, e temos um serviço ativo na memória...
-                if (currentService) {
-                    // Precisamos saber se essa linha é um insumo ou o nome do PRÓXIMO serviço.
-                    // Verificamos a PRÓXIMA linha. Se a próxima for um tempo, a atual é o nome do serviço.
-                    let nextLine = lines[i + 1] || "";
-                    let nextIsTime = nextLine.match(timeRegex);
-
-                    if (!nextIsTime && !line.includes('R$')) {
-                        // Se a próxima linha não for tempo, então a linha atual é um INSUMO
-                        currentService.parts.push(line);
-                    }
-                }
-            }
-
-            // Limpa duplicatas de serviços que possam ter sido criados errados
-            extractedServices = extractedServices.filter(s => s.name !== "Serviço Sem Nome");
-            
-            renderEditor();
-        }
-
-        function minutesToReadable(mins) {
-            if (!mins) return "0h";
-            const h = Math.floor(mins / 60);
-            const m = mins % 60;
-            return `${h > 0 ? h + 'h ' : ''}${m > 0 ? m + 'm' : ''}`.trim() || "0h";
-        }
-
-        // --- RENDERIZAÇÃO E EDIÇÃO ---
-        function renderEditor() {
-            const container = document.getElementById('editorContainer');
-            
-            if (extractedServices.length === 0) {
-                container.innerHTML = `<div class="text-center text-slate-500 py-10 flex flex-col items-center"><p class="text-sm">Nenhum serviço extraído.</p></div>`;
-                updateJSON();
-                return;
-            }
-
-            let html = '';
-            extractedServices.forEach((svc, index) => {
-                html += `
-                    <div class="bg-darkbg border border-slate-700 rounded-lg p-3 relative group">
-                        <button onclick="removeService(${index})" class="absolute top-2 right-2 text-slate-500 hover:text-rose-500 transition" title="Excluir Serviço"><i class="fa-solid fa-circle-xmark"></i></button>
-                        
-                        <input type="text" value="${svc.name}" onchange="updateField(${index}, 'name', this.value)" class="w-full bg-transparent border-b border-slate-700 text-white font-semibold focus:outline-none focus:border-primary mb-2 pb-1 text-sm pr-6" placeholder="Nome do Serviço">
-                        
-                        <div class="mb-3">
-                            <label class="text-[10px] text-slate-500 uppercase">Tempo Real (minutos)</label>
-                            <div class="flex items-center gap-2 bg-slate-800/50 rounded px-3 py-1.5">
-                                <input type="number" value="${svc.time}" onchange="updateField(${index}, 'time', this.value)" class="w-full bg-transparent text-cyan-400 text-sm focus:outline-none">
-                                <span class="text-xs text-slate-400 font-mono bg-slate-700/50 px-2 py-0.5 rounded">${minutesToReadable(svc.time)}</span>
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-800/30 rounded p-2 border border-slate-700/50">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase"><i class="fa-solid fa-boxes-stacked mr-1"></i> Insumos</span>
-                                <button onclick="addPart(${index})" class="text-[10px] text-primary hover:text-blue-400 font-semibold bg-primary/10 px-2 py-1 rounded transition"><i class="fa-solid fa-plus"></i> Add</button>
-                            </div>
-                            <ul class="space-y-1">
-                                ${svc.parts.map((part, pIndex) => `
-                                    <li class="flex items-center justify-between bg-darkbg border border-slate-700 rounded px-2 py-1 group/item">
-                                        <input type="text" value="${part}" onchange="updatePart(${index}, ${pIndex}, this.value)" class="bg-transparent text-xs text-slate-300 w-full focus:outline-none">
-                                        <button onclick="removePart(${index}, ${pIndex})" class="text-slate-500 hover:text-rose-400 ml-2 opacity-50 group-hover/item:opacity-100 transition"><i class="fa-solid fa-xmark text-[10px]"></i></button>
-                                    </li>
-                                `).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
-            updateJSON();
-        }
-
-        function updateField(index, field, value) {
-            if (field === 'time') value = parseFloat(value) || 0;
-            extractedServices[index][field] = value;
-            if (field === 'time') renderEditor();
-            else updateJSON();
-        }
-
-        function updatePart(svcIndex, partIndex, value) {
-            extractedServices[svcIndex].parts[partIndex] = value;
-            updateJSON();
-        }
-
-        function addPart(svcIndex) {
-            extractedServices[svcIndex].parts.push("Novo Insumo");
-            renderEditor();
-        }
-
-        function removePart(svcIndex, partIndex) {
-            extractedServices[svcIndex].parts.splice(partIndex, 1);
-            renderEditor();
-        }
-
-        function removeService(index) {
-            if(confirm('Excluir este serviço?')) {
-                extractedServices.splice(index, 1);
-                renderEditor();
-            }
-        }
-
-        // --- GERAR JSON SUPABASE ---
-        function updateJSON() {
-            const supabaseFormat = extractedServices.map(svc => ({
-                service_name: svc.name,
-                time_minutes: svc.time,
-                parts: svc.parts.map(p => ({ part_name: p }))
-            }));
-            document.getElementById('jsonOutput').textContent = JSON.stringify(supabaseFormat, null, 2);
-        }
-
-        function copyToClipboard() {
-            navigator.clipboard.writeText(document.getElementById('jsonOutput').textContent).then(() => {
-                const btn = document.querySelector('button[onclick="copyToClipboard()"]');
-                const original = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado!';
-                setTimeout(() => btn.innerHTML = original, 2000);
-            });
-        }
-
-        // --- OCR ---
-        async function processImage(input) {
-            if (!input.files || !input.files[0]) return;
-            
-            const progressDiv = document.getElementById('ocrProgress');
-            progressDiv.classList.remove('hidden');
-            progressDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Lendo imagem...';
-            
-            try {
-                const result = await Tesseract.recognize(
-                    input.files[0],
-                    'por',
-                    { logger: m => {
-                        if (m.status === 'recognizing text') {
-                            progressDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Extraindo: ${Math.round(m.progress * 100)}%`;
-                        }
-                    }}
-                );
-                
-                // Coloca o texto no textarea e já processa automaticamente
-                document.getElementById('rawText').value = result.data.text;
-                progressDiv.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i> Sucesso! Processando...';
-                
-                setTimeout(() => {
-                    processText();
-                    progressDiv.classList.add('hidden');
-                }, 800);
-                
-            } catch (error) {
-                console.error(error);
-                progressDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Erro no OCR.';
-                setTimeout(() => progressDiv.classList.add('hidden'), 3000);
-            }
-            input.value = ''; 
-        }
-    </script>
+create table service_parts (
+ id bigint generated by default as identity primary key,
+ service_id bigint references services(id) on delete cascade,
+ part_name text not null
+);</pre></div>
+ <p class="note">O aplicativo não envia dados automaticamente ao Supabase. Revise os registros e importe usando sua integração/API com as permissões e políticas RLS configuradas.</p>
+</section>
+</main>
+<script>
+let imageQueue=[], services=[], worker=null, busy=false;
+const $=id=>document.getElementById(id);
+function setStatus(s){$('status').textContent=s}
+function setProgress(n){$('progressBar').style.width=Math.max(0,Math.min(100,n))+'%'}
+function loadFiles(files){
+ const arr=[...files].filter(f=>f.type.startsWith('image/'));
+ imageQueue.push(...arr);
+ $('queue').textContent=imageQueue.length?imageQueue.map((f,i)=>`${i+1}. ${f.name}`).join(' · '):'Nenhuma imagem selecionada.';
+ if(arr[0]){const url=URL.createObjectURL(arr[0]);$('preview').src=url;$('preview').style.display='block'}
+ $('files').value='';
+}
+async function runOCR(){
+ if(busy)return;if(!imageQueue.length){alert('Adicione pelo menos uma imagem.');return}
+ if(!window.Tesseract){alert('Não foi possível carregar o Tesseract. Verifique a internet e recarregue a página.');return}
+ busy=true;$('ocrBtn').disabled=true;let all=[];
+ try{
+  setProgress(2);setStatus('Inicializando OCR em português…');
+  // API Tesseract.js v5: createWorker já carrega, inicializa e configura o idioma.
+  worker=await Tesseract.createWorker('por',1,{logger:m=>{
+   if(m.status==='recognizing text'){setStatus(`Reconhecendo imagem… ${Math.round((m.progress||0)*100)}%`);setProgress(Math.round((m.progress||0)*100))}
+   else if(m.status==='loading language traineddata')setStatus('Baixando idioma português…');
+  }});
+  for(let i=0;i<imageQueue.length;i++){
+   setStatus(`Lendo imagem ${i+1} de ${imageQueue.length}: ${imageQueue[i].name}`);
+   const processed=await preprocess(imageQueue[i]);
+   const result=await worker.recognize(processed);
+   all.push(result.data.text||'');
+   setProgress((i+1)/imageQueue.length*100);
+  }
+  $('rawText').value=all.filter(Boolean).join('\n\n');
+  setStatus('Leitura concluída. Agora interprete os serviços e confira os resultados.');
+  parseText();
+ }catch(e){console.error(e);setStatus('Falha no OCR: '+(e.message||e));alert('O OCR falhou. Confira a conexão e tente novamente. Você ainda pode colar o texto manualmente.')}
+ finally{if(worker){try{await worker.terminate()}catch(e){}worker=null}busy=false;$('ocrBtn').disabled=false}
+}
+async function preprocess(file){
+ const url=URL.createObjectURL(file),img=new Image();
+ try{
+  await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=url});
+  const scale=Math.min(3,Math.max(1.5,2200/Math.max(img.width,img.height)));
+  const c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);
+  const x=c.getContext('2d',{willReadFrequently:true});x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+  x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';x.drawImage(img,0,0,c.width,c.height);
+  // Escala de cinza + contraste moderado; evita limiar agressivo que apaga letras finas.
+  const d=x.getImageData(0,0,c.width,c.height);
+  for(let i=0;i<d.data.length;i+=4){let v=.299*d.data[i]+.587*d.data[i+1]+.114*d.data[i+2];v=Math.max(0,Math.min(255,(v-128)*1.22+128));d.data[i]=d.data[i+1]=d.data[i+2]=v}
+  x.putImageData(d,0,0);return c;
+ }finally{URL.revokeObjectURL(url)}
+}
+function norm(s){return s.replace(/\s+/g,' ').trim()}
+function isNoise(s){
+ const t=s.toLowerCase().replace(/[•·]/g,'').trim();
+ return !t||/^(serviço|servico|tempo real|valor|ações|acoes|empresas|clientes|mkt|crm|tempario|assine|selecione|orçamentos|orcamentos|consulta de serviços|dados da oficina|controle de acesso|mecânicos|mecanicos|viagens|luciano|pagar\.me|não encontrei o serviço)/i.test(t);
+}
+function parseDuration(s){
+ let m=s.match(/(\d{1,3})\s*h(?:\s*(\d{1,2})\s*m?)?/i);
+ if(m)return +m[1]*60+(+(m[2]||0));
+ m=s.match(/(\d{1,4})\s*(?:min|m)\b/i);return m?+m[1]:0;
+}
+function extractHeader(line){
+ // Reconhece tempo em qualquer posição e remove preço/colunas posteriores.
+ const tm=/\b\d{1,3}\s*h(?:\s*\d{1,2}\s*m?)?|\b\d{1,4}\s*(?:min|m)\b/i;
+ const m=tm.exec(line);if(!m)return null;
+ let name=line.slice(0,m.index);
+ name=name.replace(/\bR\$\s*[\d.,]+/ig,'').replace(/\s{2,}/g,' ').replace(/[|•·:—-]+$/g,'').trim();
+ name=name.replace(/^\d+[.)-]\s*/,'').trim();
+ return {name,time:parseDuration(m[0])};
+}
+function cleanPart(s){
+ return norm(s.replace(/^[•·▪◦\-–—]+\s*/,'').replace(/\bR\$\s*[\d.,]+/ig,'').trim());
+}
+function parseText(){
+ const lines=$('rawText').value.split(/\r?\n/).map(norm).filter(Boolean);
+ services=[];let current=null;
+ for(let i=0;i<lines.length;i++){
+  let line=lines[i];if(isNoise(line))continue;
+  let header=extractHeader(line);
+  if(header&&header.name&&header.time>0){
+   current={name:header.name,time:header.time,parts:[]};services.push(current);continue;
+  }
+  // OCR pode colocar nome e tempo em linhas consecutivas.
+  if(parseDuration(line)>0&&/^\s*\d{1,3}\s*h|\d+\s*(?:min|m)\s*$/i.test(line)){
+   let prev= i>0?lines[i-1]:'';
+   if(prev&&!isNoise(prev)&&!extractHeader(prev)){
+    current={name:cleanPart(prev),time:parseDuration(line),parts:[]};services.push(current);
+   }
+   continue;
+  }
+  // Uma linha com valor/preço isolado não é insumo.
+  if(/^R?\$\s*[\d.,]+$/.test(line)||/^\d+[.,]\d{2}$/.test(line))continue;
+  if(current){
+   const part=cleanPart(line);
+   if(part&&!isNoise(part)&&part.length>1&&!/^(tempo|valor|ações)$/i.test(part))current.parts.push(part);
+  }
+ }
+ // Remove duplicatas de insumos dentro de cada serviço e nomes vazios.
+ services=services.filter(s=>s.name&&s.time>0);
+ services.forEach(s=>s.parts=[...new Set(s.parts)]);
+ render();
+ if(!services.length)setStatus('Nenhum serviço reconhecido automaticamente. Confira o texto OCR e tente ajustar a captura ou editar manualmente.');
+ else setStatus(`${services.length} serviço(s) identificado(s). Revise nomes, tempos e insumos antes de exportar.`);
+}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function readable(n){let h=Math.floor(n/60),m=n%60;return (h?h+'h ':'')+(m?m+'min':'')||'0min'}
+function render(){
+ $('serviceCount').textContent=services.length;
+ $('partCount').textContent=services.reduce((a,s)=>a+s.parts.length,0);
+ $('totalTime').textContent=services.reduce((a,s)=>a+s.time,0)+' min';
+ if(!services.length){$('editor').innerHTML='<div class="empty">Nenhum serviço identificado.<br><small>Adicione um serviço manualmente ou processe uma imagem.</small></div>';updateJSON();return}
+ $('editor').innerHTML=services.map((s,i)=>`
+ <div class="service">
+  <div class="service-head">
+   <input aria-label="Nome do serviço" value="${esc(s.name)}" onchange="services[${i}].name=this.value;updateJSON()" placeholder="Nome do serviço">
+   <input aria-label="Tempo em minutos" type="number" min="0" value="${s.time}" onchange="services[${i}].time=Math.max(0,parseInt(this.value)||0);render()" title="Tempo em minutos">
+   <button class="danger" title="Excluir serviço" onclick="removeService(${i})">×</button>
+  </div>
+  <div class="row" style="justify-content:space-between;margin-top:5px"><small>Tempo: ${readable(s.time)} · ${s.time} minutos</small><small>Serviço ${i+1}</small></div>
+  <div class="parts"><div class="parts-title"><span>Insumos (${s.parts.length})</span><button onclick="addPart(${i})">＋ Insumo</button></div>
+   ${s.parts.map((p,j)=>`<div class="part"><input value="${esc(p)}" aria-label="Nome do insumo" onchange="services[${i}].parts[${j}]=this.value;updateJSON()"><button class="danger" onclick="removePart(${i},${j})">×</button></div>`).join('')}
+   ${s.parts.length?'':'<small>Nenhum insumo associado. Adicione se necessário.</small>'}
+  </div>
+ </div>`).join('');
+ updateJSON();
+}
+function addService(){services.push({name:'Novo serviço',time:0,parts:[]});render()}
+function removeService(i){if(confirm('Excluir este serviço?')){services.splice(i,1);render()}}
+function addPart(i){services[i].parts.push('Novo insumo');render()}
+function removePart(i,j){services[i].parts.splice(j,1);render()}
+function sortServices(){services.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));render()}
+function getData(){
+ if($('format').value==='flat')return services.flatMap((s,i)=>[{service_name:s.name,time_minutes:s.time,service_order:i+1},...s.parts.map(p=>({service_name:s.name,part_name:p}))]);
+ return services.map(s=>({service_name:s.name,time_minutes:s.time,parts:s.parts.map(p=>({part_name:p}))}));
+}
+function updateJSON(){$('jsonOutput').textContent=JSON.stringify(getData(),null,2)}
+async function copyJSON(){try{await navigator.clipboard.writeText($('jsonOutput').textContent);setStatus('JSON copiado para a área de transferência.')}catch(e){setStatus('Não foi possível copiar automaticamente. Selecione e copie o JSON.')} }
+function saveFile(name,type,content){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
+function downloadJSON(){saveFile('tempario-servicos.json','application/json;charset=utf-8',JSON.stringify(getData(),null,2))}
+function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
+function downloadCSV(){let rows=[['servico','tempo_minutos','insumo']];services.forEach(s=>{if(s.parts.length)s.parts.forEach(p=>rows.push([s.name,s.time,p]));else rows.push([s.name,s.time,''])});saveFile('tempario-servicos.csv','text/csv;charset=utf-8','\uFEFF'+rows.map(r=>r.map(csvCell).join(';')).join('\r\n'))}
+function clearAll(){if(!confirm('Limpar imagens, texto e serviços extraídos?'))return;imageQueue=[];services=[];$('rawText').value='';$('queue').textContent='Nenhuma imagem selecionada.';$('preview').style.display='none';setProgress(0);setStatus('Tudo limpo.');render()}
+render();
+</script>
 </body>
 </html>
