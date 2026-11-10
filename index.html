@@ -39,6 +39,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#a7f3d0;font:12px/1.5 ui-m
  <div class="field"><label>Imagens na fila</label><div id="queue" class="muted" style="font-size:12px">Nenhuma imagem selecionada.</div></div>
  <div class="row wrap"><button class="primary" id="ocrBtn" onclick="runOCR()">◎ Extrair texto das imagens</button><button class="ghost" onclick="document.getElementById('files').click()">Adicionar imagens</button></div>
  <div class="progress"><span id="progressBar"></span></div><div id="status" class="status">OCR em português. A primeira execução pode demorar para baixar o idioma.</div>
+ <details style="margin:8px 0;color:#91a1b9;font-size:12px"><summary style="cursor:pointer">Diagnóstico técnico do OCR</summary><pre id="diagnostics" style="min-height:0;max-height:180px;margin-top:8px">Aguardando execução…</pre></details>
  <div class="field"><label for="rawText">Texto reconhecido / texto colado manualmente</label><textarea id="rawText" placeholder="O texto extraído aparecerá aqui. Você também pode colar o texto manualmente..."></textarea></div>
  <div class="actions"><button class="primary" onclick="parseText()">✦ Interpretar serviços</button><button class="ghost" onclick="document.getElementById('rawText').value=''">Apagar texto</button></div>
  <p class="note">Dica: prefira capturas nítidas, sem vídeo sobreposto, com as colunas Serviço e Tempo Real visíveis. O OCR roda no navegador e exige internet para carregar o motor/idioma na primeira vez.</p>
@@ -89,11 +90,30 @@ async function runOCR(){
  busy=true;$('ocrBtn').disabled=true;let all=[];
  try{
   setProgress(2);setStatus('Inicializando OCR em português…');
-  // API Tesseract.js v5: createWorker já carrega, inicializa e configura o idioma.
-  worker=await Tesseract.createWorker('por',1,{logger:m=>{
-   if(m.status==='recognizing text'){setStatus(`Reconhecendo imagem… ${Math.round((m.progress||0)*100)}%`);setProgress(Math.round((m.progress||0)*100))}
-   else if(m.status==='loading language traineddata')setStatus('Baixando idioma português…');
-  }});
+  // URLs explícitas evitam que o worker tente resolver arquivos por caminhos relativos
+  // quando a aplicação está hospedada em GitHub Pages/Vercel.
+  const workerPath='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js';
+  const corePath='https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1/tesseract-core-simd-lstm.wasm.js';
+  const langPath='https://tessdata.projectnaptha.com/4.0.0';
+  const diag = $('diagnostics');
+  const log = msg => { diag.textContent += '\\n' + msg; };
+  diag.textContent='Tesseract.js: '+(Tesseract.version || 'carregado')+'\\nIniciando worker…';
+  worker=await Tesseract.createWorker('por', Tesseract.OEM.LSTM_ONLY, {
+   logger:m=>{
+    if(m.status==='recognizing text'){setStatus(`Reconhecendo imagem… ${Math.round((m.progress||0)*100)}%`);setProgress(Math.round((m.progress||0)*100))}
+    else if(m.status==='loading language traineddata')setStatus('Baixando idioma português…');
+    if(m.status) log(m.status + (m.progress!==undefined?' '+Math.round(m.progress*100)+'%':''));
+   },
+   errorHandler:e=>log('Worker: '+(e?.message||e))
+  }, {
+   workerPath, corePath, langPath,
+   gzip:true
+  });
+  log('Worker inicializado com idioma por.');
+  await worker.setParameters({
+   tessedit_pageseg_mode: Tesseract.PSM.AUTO,
+   preserve_interword_spaces: '1'
+  });
   for(let i=0;i<imageQueue.length;i++){
    setStatus(`Lendo imagem ${i+1} de ${imageQueue.length}: ${imageQueue[i].name}`);
    const processed=await preprocess(imageQueue[i]);
@@ -104,7 +124,13 @@ async function runOCR(){
   $('rawText').value=all.filter(Boolean).join('\n\n');
   setStatus('Leitura concluída. Agora interprete os serviços e confira os resultados.');
   parseText();
- }catch(e){console.error(e);setStatus('Falha no OCR: '+(e.message||e));alert('O OCR falhou. Confira a conexão e tente novamente. Você ainda pode colar o texto manualmente.')}
+ }catch(e){
+  console.error('Falha OCR detalhada:',e);
+  const detail=(e && (e.stack || e.message)) ? (e.stack || e.message) : String(e);
+  $('diagnostics').textContent += '\\nERRO: '+detail;
+  setStatus('Falha no OCR: '+(e.message||String(e)));
+  alert('O OCR falhou. Abra “Diagnóstico técnico do OCR” e veja a causa detalhada. Se aparecer erro de Worker/WASM, publique o HTML em HTTPS (Vercel ou GitHub Pages) e tente novamente.');
+ }
  finally{if(worker){try{await worker.terminate()}catch(e){}worker=null}busy=false;$('ocrBtn').disabled=false}
 }
 async function preprocess(file){
